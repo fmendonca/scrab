@@ -1,9 +1,9 @@
 Flask
 flask-cors
 flask-swagger-ui
-requests
-beautifulsoup4
 weasyprint
-cairocffi
+beautifulsoup4
+requests
 PyPDF2
-gunicorn
+celery
+redis
