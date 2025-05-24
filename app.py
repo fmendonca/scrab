@@ -11,7 +11,11 @@ import uuid
 import json
 import logging
 
-from crawler import crawl_and_generate_pdfs  # ⬅️ aqui usamos o crawler externo
+# Suprime o warning de vazamento de semáforos do multiprocessing no macOS
+import multiprocessing.resource_tracker
+multiprocessing.resource_tracker._RESOURCE_TYPES.remove('semaphore')
+
+from crawler import crawl_and_generate_pdfs
 
 app = Flask(__name__)
 CORS(app)
@@ -21,19 +25,13 @@ OUTPUT_DIR = "output"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Logging
 LOG_FILE = os.path.join(OUTPUT_DIR, 'logs', 'app.log')
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s %(message)s')
 
-# Swagger
 SWAGGER_URL = '/docs'
 API_URL = '/static/openapi.json'
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={'app_name': "Flask PDF Scraper"}
-)
+swaggerui_blueprint = get_swaggerui_blueprint(SWAGGER_URL, API_URL, config={'app_name': "Flask PDF Scraper"})
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 @app.route('/')
@@ -46,14 +44,12 @@ def process_files_and_links():
     urls = request.form.getlist("urls")
     pdf_paths = []
 
-    # Salvar PDFs enviados
     for pdf_file in uploaded_pdfs:
         filename = f"{uuid.uuid4()}.pdf"
         path = os.path.join(UPLOAD_DIR, filename)
         pdf_file.save(path)
         pdf_paths.append(path)
 
-    # Gerar PDFs de crawling
     for url in urls:
         try:
             pdfs_from_url = crawl_and_generate_pdfs(url, OUTPUT_DIR, max_depth=2)
@@ -61,7 +57,6 @@ def process_files_and_links():
         except Exception as e:
             logging.error(f"Erro processando {url}: {str(e)}")
 
-    # Mesclar PDFs
     final_pdf_path = os.path.join(OUTPUT_DIR, f"merged_{uuid.uuid4()}.pdf")
     merger = PdfMerger()
     for pdf in pdf_paths:
@@ -69,7 +64,6 @@ def process_files_and_links():
     merger.write(final_pdf_path)
     merger.close()
 
-    # Scraping de conteúdo principal
     scraped_data = {}
     for url in urls:
         try:
@@ -88,7 +82,6 @@ def process_files_and_links():
     with open(json_output_path, "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, ensure_ascii=False, indent=2)
 
-    # Logging e histórico
     logging.info(f"PDFs: {[f.filename for f in uploaded_pdfs]}")
     logging.info(f"URLs: {urls}")
     logging.info(f"PDF final: {final_pdf_path}")
