@@ -1,12 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 import os
 import requests
 from bs4 import BeautifulSoup
-import pdfkit
 from PyPDF2 import PdfMerger
+from weasyprint import HTML
+from datetime import datetime
 import uuid
 import json
+import logging
+
+from crawler import crawl_and_generate_pdfs  # ⬅️ aqui usamos o crawler externo
 
 app = Flask(__name__)
 CORS(app)
@@ -16,41 +21,55 @@ OUTPUT_DIR = "output"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# Logging
+LOG_FILE = os.path.join(OUTPUT_DIR, 'logs', 'app.log')
+os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s %(message)s')
+
+# Swagger
+SWAGGER_URL = '/docs'
+API_URL = '/static/openapi.json'
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={'app_name': "Flask PDF Scraper"}
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/process', methods=['POST'])
 def process_files_and_links():
     uploaded_pdfs = request.files.getlist("pdfs")
     urls = request.form.getlist("urls")
-
     pdf_paths = []
 
+    # Salvar PDFs enviados
     for pdf_file in uploaded_pdfs:
         filename = f"{uuid.uuid4()}.pdf"
         path = os.path.join(UPLOAD_DIR, filename)
         pdf_file.save(path)
         pdf_paths.append(path)
 
+    # Gerar PDFs de crawling
     for url in urls:
         try:
-            html_content = requests.get(url).text
-            html_filename = f"{uuid.uuid4()}.html"
-            html_path = os.path.join(OUTPUT_DIR, html_filename)
-            with open(html_path, "w", encoding="utf-8") as f:
-                f.write(html_content)
-            pdf_filename = html_filename.replace(".html", ".pdf")
-            pdf_output_path = os.path.join(OUTPUT_DIR, pdf_filename)
-            pdfkit.from_file(html_path, pdf_output_path)
-            pdf_paths.append(pdf_output_path)
+            pdfs_from_url = crawl_and_generate_pdfs(url, OUTPUT_DIR, max_depth=2)
+            pdf_paths.extend(pdfs_from_url)
         except Exception as e:
-            print(f"Erro processando URL {url}: {e}")
+            logging.error(f"Erro processando {url}: {str(e)}")
 
+    # Mesclar PDFs
+    final_pdf_path = os.path.join(OUTPUT_DIR, f"merged_{uuid.uuid4()}.pdf")
     merger = PdfMerger()
     for pdf in pdf_paths:
         merger.append(pdf)
-
-    final_pdf_path = os.path.join(OUTPUT_DIR, f"merged_{uuid.uuid4()}.pdf")
     merger.write(final_pdf_path)
     merger.close()
 
+    # Scraping de conteúdo principal
     scraped_data = {}
     for url in urls:
         try:
@@ -69,10 +88,38 @@ def process_files_and_links():
     with open(json_output_path, "w", encoding="utf-8") as f:
         json.dump(scraped_data, f, ensure_ascii=False, indent=2)
 
-    return jsonify({
+    # Logging e histórico
+    logging.info(f"PDFs: {[f.filename for f in uploaded_pdfs]}")
+    logging.info(f"URLs: {urls}")
+    logging.info(f"PDF final: {final_pdf_path}")
+    logging.info(f"JSON scraping: {json_output_path}")
+
+    history_path = os.path.join(OUTPUT_DIR, 'history.json')
+    try:
+        with open(history_path, 'r', encoding='utf-8') as hf:
+            history = json.load(hf)
+    except:
+        history = []
+
+    history.append({
+        "timestamp": datetime.now().isoformat(),
+        "pdfs_uploaded": [f.filename for f in uploaded_pdfs],
+        "urls": urls,
         "pdf_result": final_pdf_path,
         "json_result": json_output_path
     })
 
+    with open(history_path, 'w', encoding='utf-8') as hf:
+        json.dump(history, hf, ensure_ascii=False, indent=2)
+
+    return jsonify({
+        "pdf_result": f"/output/{os.path.basename(final_pdf_path)}",
+        "json_result": f"/output/{os.path.basename(json_output_path)}"
+    })
+
+@app.route('/output/<path:filename>')
+def download_output(filename):
+    return send_from_directory(OUTPUT_DIR, filename, as_attachment=False)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5555)

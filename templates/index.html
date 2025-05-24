@@ -22,7 +22,7 @@
             text-align: center;
             color: #333;
         }
-        input[type="file"], input[type="text"] {
+        input[type="file"], textarea {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -50,6 +50,20 @@
             margin-top: 10px;
         }
     </style>
+    <script>
+    let lang = navigator.language.startsWith('pt') ? 'pt' : 'en';
+    async function loadLocale() {
+        const res = await fetch(`/static/locales/${lang}.json`);
+        const dict = await res.json();
+        document.title = dict.title;
+        document.querySelector("h1").innerText = dict.title;
+        document.querySelector("label[for='pdfs']").innerText = dict.upload_pdfs;
+        document.querySelector("label[for='urls']").innerText = dict.enter_urls;
+        document.querySelector("button").innerText = dict.process;
+        window.resultLabels = dict;
+    }
+    window.addEventListener("DOMContentLoaded", loadLocale);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -59,7 +73,7 @@
             <input type="file" id="pdfs" name="pdfs" multiple>
 
             <label for="urls">Enter URLs (one per line):</label>
-            <textarea id="urls" name="urls" rows="5" style="width:100%; padding:12px; border-radius:6px;"></textarea>
+            <textarea id="urls" name="urls" rows="5"></textarea>
 
             <button type="submit">Process</button>
         </form>
@@ -94,9 +108,9 @@
 
             const data = await response.json();
             resultDiv.innerHTML = `
-                <h3>Resultados:</h3>
-                <a href="${data.pdf_result}" target="_blank">Baixar PDF combinado</a>
-                <a href="${data.json_result}" target="_blank">Baixar JSON com scraping</a>
+                <h3>${window.resultLabels.results}</h3>
+                <a href="${data.pdf_result}" target="_blank">${window.resultLabels.download_pdf}</a>
+                <a href="${data.json_result}" target="_blank">${window.resultLabels.download_json}</a>
             `;
         });
     </script>

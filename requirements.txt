@@ -1,6 +1,8 @@
 Flask
 flask-cors
+flask-swagger-ui
 requests
 beautifulsoup4
-pdfkit
+weasyprint
+cairocffi
 PyPDF2

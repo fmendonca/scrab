@@ -1,0 +1,38 @@
+# Ambiente virtual
+.venv/
+venv/
+ENV/
+env/
+
+# Bytecode Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Arquivos de log
+*.log
+output/logs/
+
+# Saídas geradas (PDF, JSON, histórico)
+output/*.pdf
+output/*.json
+output/history.json
+
+# Arquivos temporários
+*.tmp
+*.swp
+*.bak
+
+# Arquivos de sistema/macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Arquivos zipados ou builds locais
+*.zip
+*.egg-info/
+dist/
+build/
