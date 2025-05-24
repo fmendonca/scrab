@@ -12,8 +12,8 @@ import json
 import logging
 
 # Suprime o warning de vazamento de semáforos do multiprocessing no macOS
-import multiprocessing.resource_tracker
-multiprocessing.resource_tracker._RESOURCE_TYPES.remove('semaphore')
+#import multiprocessing.resource_tracker
+#multiprocessing.resource_tracker._RESOURCE_TYPES.remove('semaphore')
 
 from crawler import crawl_and_generate_pdfs
 

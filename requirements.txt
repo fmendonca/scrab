@@ -6,3 +6,4 @@ beautifulsoup4
 weasyprint
 cairocffi
 PyPDF2
+gunicorn
