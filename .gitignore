@@ -4,36 +4,29 @@ venv/
 ENV/
 env/
 
-#
-output/*
 # Bytecode Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# Arquivos de log
-*.log
-output/logs/
+# Arquivos de log e saídas geradas
+output/*
+!output/.gitkeep
 
-# Saídas geradas (PDF, JSON, histórico)
-output/*.pdf
-output/*.json
-output/history.json
-
-# Arquivos temporários
+# Temporários, backups
 *.tmp
 *.swp
 *.bak
 
-# Arquivos de sistema/macOS
+# Arquivos do sistema/macOS
 .DS_Store
 
 # IDEs
 .vscode/
 .idea/
 
-# Arquivos zipados ou builds locais
+# Build e empacotamento
 *.zip
 *.egg-info/
 dist/
