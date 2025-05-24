@@ -1,0 +1,9 @@
+{
+  "title": "Flask PDF Scraper",
+  "upload_pdfs": "Upload PDFs:",
+  "enter_urls": "Enter URLs (one per line):",
+  "process": "Process",
+  "results": "Results:",
+  "download_pdf": "Download combined PDF",
+  "download_json": "Download scraping JSON"
+}

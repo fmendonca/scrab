@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Flask PDF Scraper API",
+    "version": "1.0.0",
+    "description": "API para upload de PDFs, gera\u00e7\u00e3o de PDFs a partir de URLs e scraping de conte\u00fado para JSON."
+  },
+  "paths": {
+    "/process": {
+      "post": {
+        "summary": "Processa PDFs e URLs",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pdfs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultados dos arquivos processados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pdf_result": {
+                      "type": "string"
+                    },
+                    "json_result": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

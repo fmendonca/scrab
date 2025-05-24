@@ -1,0 +1,9 @@
+{
+  "title": "Raspador de PDFs com Flask",
+  "upload_pdfs": "Envie seus PDFs:",
+  "enter_urls": "Informe os links (um por linha):",
+  "process": "Processar",
+  "results": "Resultados:",
+  "download_pdf": "Baixar PDF combinado",
+  "download_json": "Baixar JSON com scraping"
+}
