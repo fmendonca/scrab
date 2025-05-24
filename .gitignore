@@ -4,6 +4,8 @@ venv/
 ENV/
 env/
 
+#
+output/*
 # Bytecode Python
 __pycache__/
 *.py[cod]
